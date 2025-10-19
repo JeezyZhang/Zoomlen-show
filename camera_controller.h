@@ -4,6 +4,7 @@
 #include "recorder.h"
 #include "osd_manager.h"
 #include "zoom_manager.h"
+#include "rtsp_streamer.h" // 新增
 
 #include <string>
 #include <memory>
@@ -36,6 +37,8 @@ public:
     void set_osd_enabled(bool enabled);
     void zoom_in();
     void zoom_out();
+    int start_rtsp_stream(const std::string& url); // 新增
+    int stop_rtsp_stream();                       // 新增
 
 private:
     std::string m_device_path;
@@ -49,8 +52,13 @@ private:
     std::unique_ptr<Recorder> m_recorder;
     std::thread m_recorder_thread;
 
+    // 新增RTSP推流相关成员
+    std::unique_ptr<RtspStreamer> m_streamer;
+    std::thread m_streamer_thread;
+
     // 内部状态标志，用于防止重复操作
     std::atomic<bool> m_is_recording{false};
+    std::atomic<bool> m_is_streaming{false}; // 新增
 };
 
 #endif // CAMERA_CONTROLLER_H

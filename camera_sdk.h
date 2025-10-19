@@ -56,6 +56,27 @@ extern "C"
     int camera_sdk_stop_recording(void *handle);
 
     /**
+     * @brief 开始RTSP推流。
+     *
+     * 这是一个非阻塞函数。它会启动一个后台线程来执行推流任务，并立即返回。
+     *
+     * @param handle camera_sdk_create 返回的有效句柄。
+     * @param url 要推送到的RTSP服务器地址 (例如 "rtsp://localhost:8554/live.stream")。
+     * @return 成功启动返回 0，如果已在推流中或参数错误则返回 -1。
+     */
+    int camera_sdk_start_rtsp_stream(void* handle, const char* url);
+
+    /**
+     * @brief 停止当前正在进行的RTSP推流。
+     *
+     * 这是一个阻塞函数。它会向推流线程发送停止信号，并等待线程完全结束后才返回。
+     *
+     * @param handle camera_sdk_create 返回的有效句柄。
+     * @return 成功停止返回 0，如果当前没有在推流则返回 -1。
+     */
+    int camera_sdk_stop_rtsp_stream(void* handle);
+
+    /**
      * @brief 拍摄一张快照 (JPEG 图片)。
      *
      * 这是一个非阻塞函数。它会启动一个后台线程来执行拍照任务，并立即返回。
@@ -97,3 +118,4 @@ extern "C"
 #endif
 
 #endif // CAMERA_SDK_H
+

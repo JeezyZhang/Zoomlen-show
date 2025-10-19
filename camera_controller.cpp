@@ -11,8 +11,9 @@
 
 extern "C"
 {
-#include <libavdevice/avdevice.h>  // 包含FFmpeg设备库，用于设备输入输出
-#include <libavutil/log.h>         // 包含FFmpeg日志库，用于日志输出
+#include <libavdevice/avdevice.h>
+#include <libavutil/log.h>
+#include <libavformat/avformat.h>
 }
 
 /**
@@ -94,11 +95,19 @@ CameraController::~CameraController()
     {
         stop_recording();
     }
+    // 如果仍在推流，则先停止它
+    if (m_is_streaming) {
+        stop_rtsp_stream();
+    }
 
     // 确保任何可能存在的、已结束但未被 join 的线程被 join
     if (m_recorder_thread.joinable())
     {
         m_recorder_thread.join();
+    }
+    if (m_streamer_thread.joinable())
+    {
+        m_streamer_thread.join();
     }
 
     // 向文件管理器线程发送退出信号并唤醒它
@@ -132,6 +141,8 @@ bool CameraController::initialize()
 
     // 注册所有 FFmpeg 设备，这是使用 V4L2 前的必需步骤
     avdevice_register_all();
+    // 初始化网络库，用于RTSP
+    avformat_network_init();
 
     return true;
 }
@@ -220,18 +231,67 @@ void CameraController::set_osd_enabled(bool enabled)
     }
 }
 
-void CameraController::zoom_in()
-{
+int CameraController::start_rtsp_stream(const std::string& url) {
+    if (m_is_streaming) {
+        std::cerr << "错误: RTSP推流已在进行中。" << std::endl;
+        return -1;
+    }
+
+    if (m_streamer_thread.joinable()) {
+        m_streamer_thread.join();
+    }
+
+    m_streamer.reset(new RtspStreamer(m_device_path, m_osd_manager, m_zoom_manager));
+
+    if (!m_streamer->prepare(url)) {
+        m_streamer.reset();
+        return -1;
+    }
+
+    m_is_streaming = true;
+    m_streamer_thread = std::thread([this]() {
+        if (m_streamer) m_streamer->run();
+        m_is_streaming = false;
+    });
+    return 0;
+}
+
+int CameraController::stop_rtsp_stream() {
+    if (!m_is_streaming) {
+        if (m_streamer_thread.joinable()) {
+             if (m_streamer) m_streamer->stop();
+             m_streamer_thread.join();
+             m_streamer.reset();
+             std::cout << "RTSP推流已停止。" << std::endl;
+             return 0;
+        }
+        std::cerr << "错误: 当前没有在推流。" << std::endl;
+        return -1;
+    }
+
+    if (m_streamer) {
+        m_streamer->stop();
+    }
+    if (m_streamer_thread.joinable()) {
+        m_streamer_thread.join();
+    }
+    m_streamer.reset();
+    m_is_streaming = false;
+    std::cout << "RTSP推流已停止。" << std::endl;
+    return 0;
+}
+
+void CameraController::zoom_in() {
     if (m_zoom_manager)
     {
         m_zoom_manager->zoom_in();
     }
 }
 
-void CameraController::zoom_out()
-{
+void CameraController::zoom_out() {
     if (m_zoom_manager)
     {
         m_zoom_manager->zoom_out();
     }
 }
+

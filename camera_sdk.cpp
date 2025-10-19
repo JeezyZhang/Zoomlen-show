@@ -2,8 +2,6 @@
 #include "camera_controller.h"
 #include <iostream>
 
-
-
 /**
  * @file camera_sdk.cpp
  * @brief 实现了 camera_sdk.h 中声明的 C 语言 API 接口。
@@ -74,6 +72,20 @@ extern "C"
         return -1;
     }
 
+    int camera_sdk_start_rtsp_stream(void* handle, const char* url) {
+        if (handle && url) {
+            return static_cast<CameraController*>(handle)->start_rtsp_stream(url);
+        }
+        return -1;
+    }
+
+    int camera_sdk_stop_rtsp_stream(void* handle) {
+        if (handle) {
+            return static_cast<CameraController*>(handle)->stop_rtsp_stream();
+        }
+        return -1;
+    }
+
     int camera_sdk_take_snapshot(void *handle)
     {
         if (handle)
@@ -109,3 +121,4 @@ extern "C"
     }
 
 } // extern "C"
+

@@ -13,12 +13,14 @@
 // 打印用户操作提示
 void print_usage() {
     std::cout << "\n========= 摄像头 SDK 交互式示例 ==========" << std::endl;
-    std::cout << "  record <res>  - 开始录制 (1080p, 720p, 360p)." << std::endl;
-    std::cout << "  snapshot      - 拍摄一张照片。" << std::endl;
-    std::cout << "  osd on/off    - 开启或关闭 OSD。" << std::endl;
-    std::cout << "  + / -         - 放大 / 缩小 (步长 0.1x)。" << std::endl;
-    std::cout << "  stop          - 停止当前录制。" << std::endl;
-    std::cout << "  exit          - 退出程序。" << std::endl;
+    std::cout << "  record <res>      - 开始录制 (1080p, 720p, 360p)." << std::endl;
+    std::cout << "  stop              - 停止当前录制。" << std::endl;
+    std::cout << "  stream <rtsp_url> - 开始RTSP推流。" << std::endl;
+    std::cout << "  stop_stream       - 停止RTSP推流。" << std::endl;
+    std::cout << "  snapshot          - 拍摄一张照片。" << std::endl;
+    std::cout << "  osd on/off        - 开启或关闭 OSD。" << std::endl;
+    std::cout << "  + / -             - 放大 / 缩小 (步长 0.1x)。" << std::endl;
+    std::cout << "  exit              - 退出程序。" << std::endl;
     std::cout << "============================================" << std::endl;
     std::cout << "> ";
 }
@@ -50,6 +52,11 @@ int main(int argc, char **argv) {
             }
         } else if (line == "stop") {
             camera_sdk_stop_recording(handle);
+        } else if (line.rfind("stream ", 0) == 0) {
+            std::string url = line.substr(7);
+            camera_sdk_start_rtsp_stream(handle, url.c_str());
+        } else if (line == "stop_stream") {
+            camera_sdk_stop_rtsp_stream(handle);
         } else if (line == "snapshot") {
             std::cout << "请求拍照..." << std::endl;
             camera_sdk_take_snapshot(handle);

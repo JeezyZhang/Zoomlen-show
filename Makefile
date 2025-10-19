@@ -51,7 +51,7 @@ LDLIBS = $(PKG_LIBS) -lrockchip_mpp -lrga
 
 # --- SDK 库定义 ---
 # 组成静态库的所有源文件 (除了示例 main.cpp)
-SDK_SOURCES = camera_sdk.cpp camera_controller.cpp recorder.cpp file_utils.cpp snapshotter.cpp osd_manager.cpp zoom_manager.cpp
+SDK_SOURCES = camera_sdk.cpp camera_controller.cpp recorder.cpp file_utils.cpp snapshotter.cpp osd_manager.cpp zoom_manager.cpp rtsp_streamer.cpp
 # 根据源文件列表自动生成对应的 .o 文件路径列表
 SDK_OBJECTS = $(addprefix $(OBJ_DIR)/, $(SDK_SOURCES:.cpp=.o))
 SDK_TARGET_NAME = libcamera_sdk.a
