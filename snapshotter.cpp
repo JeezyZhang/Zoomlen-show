@@ -42,6 +42,7 @@ Snapshotter::Snapshotter(std::string device,
 
 void Snapshotter::shoot()
 {
+    std::cout << "进入shoot函数" << std::endl;
     std::thread(&Snapshotter::run, this).detach();
 }
 

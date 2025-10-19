@@ -9,10 +9,19 @@
 #include <sys/sendfile.h>
 #include <iostream>
 
-// 用于读写回退模式的缓冲区大小
-static const size_t COPY_BUF_SIZE = 64 * 1024; // 64KB
+/**
+ * @file file_utils.cpp
+ * @brief 实现了文件操作相关的工具函数。
+ */
 
-// 内部辅助函数: 使用 sendfile 进行高效文件复制
+/**
+ * @brief 内部辅助函数: 使用 sendfile 进行高效文件复制。
+ * * sendfile 是一个零拷贝或接近零拷贝的系统调用，非常适合在内核空间直接传输文件数据，
+ * 效率远高于用户空间的 read/write 循环。
+ * * @param src 源文件路径。
+ * @param dst 目标文件路径。
+ * @return 成功返回 0，失败返回负值。
+ */
 static int copy_file_sendfile(const char *src, const char *dst)
 {
     int in_fd = -1, out_fd = -1;
@@ -56,7 +65,7 @@ static int copy_file_sendfile(const char *src, const char *dst)
     return 0;
 }
 
-// 对外接口
+// 对外接口的实现
 int move_file_robust(const char *src_path, const char *dst_path)
 {
     // 1. 尝试最高效的 rename
