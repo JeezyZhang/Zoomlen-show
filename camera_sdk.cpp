@@ -1,6 +1,7 @@
 #include "camera_sdk.h"
 #include "camera_controller.h"
 #include <iostream>
+#include <new> // For std::bad_alloc
 
 /**
  * @file camera_sdk.cpp
@@ -15,7 +16,7 @@ extern "C"
 
     void *camera_sdk_create(const char *device_path)
     {
-        if (!device_path)
+        if (!device_path || device_path[0] == '\0')
         {
             std::cerr << "SDK错误: 设备路径不能为空。" << std::endl;
             return nullptr;
@@ -90,7 +91,6 @@ extern "C"
     {
         if (handle)
         {
-            std::cout << "进入camera_sdk_take_snapshot函数" << std::endl;
             return static_cast<CameraController *>(handle)->take_snapshot();
         }
         return -1;
@@ -101,6 +101,25 @@ extern "C"
         if (handle)
         {
             static_cast<CameraController *>(handle)->set_osd_enabled(enabled);
+        }
+    }
+
+    void camera_sdk_set_osd_data(void *handle, const camera_sdk_pos_data_t* data)
+    {
+        if (handle && data && data->timestamp)
+        {
+            // C++ OSD管理器需要的数据结构
+            OsdManager::PosData pos_data;
+            pos_data.latitude = data->latitude;
+            pos_data.longitude = data->longitude;
+            pos_data.speed_kmh = data->speed_kmh;
+            pos_data.timestamp = data->timestamp;
+            
+            // 获取 OSD 管理器并设置数据
+            auto* controller = static_cast<CameraController*>(handle);
+            if (controller->get_osd_manager()) {
+                controller->get_osd_manager()->set_pos_data(pos_data);
+            }
         }
     }
 
@@ -117,6 +136,22 @@ extern "C"
         if (handle)
         {
             static_cast<CameraController *>(handle)->zoom_out();
+        }
+    }
+
+    void camera_sdk_set_iso(void* handle, int iso)
+    {
+        if (handle)
+        {
+            static_cast<CameraController*>(handle)->set_iso(iso);
+        }
+    }
+
+    void camera_sdk_set_ev(void* handle, double ev)
+    {
+        if (handle)
+        {
+            static_cast<CameraController*>(handle)->set_ev(ev);
         }
     }
 

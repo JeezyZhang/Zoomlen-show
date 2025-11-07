@@ -49,7 +49,7 @@
 #define RTSP_OUTPUT_WIDTH   1920
 #define RTSP_OUTPUT_HEIGHT  1080
 // RTSP推流的比特率
-#define RTSP_BITRATE        8000000 // 4 Mbps
+#define RTSP_BITRATE        4000000 // 4 Mbps
 // RTSP推流的GOP大小
 #define RTSP_GOP_SIZE       30
 // RTSP推流使用的传输协议 ("udp" 或 "tcp")

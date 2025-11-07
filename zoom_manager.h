@@ -1,3 +1,5 @@
+// --- START OF FILE zoom_manager.h ---
+
 #ifndef ZOOM_MANAGER_H
 #define ZOOM_MANAGER_H
 
@@ -53,4 +55,3 @@ private:
 };
 
 #endif // ZOOM_MANAGER_H
-

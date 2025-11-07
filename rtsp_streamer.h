@@ -1,3 +1,5 @@
+// --- START OF FILE rtsp_streamer.h ---
+
 #ifndef RTSP_STREAMER_H
 #define RTSP_STREAMER_H
 
@@ -5,87 +7,73 @@
 #include <functional>
 #include <atomic>
 #include <memory>
+#include <thread>
+#include <mutex> // [新增] 包含 mutex
 
-// 前向声明
-class OsdManager;
-class ZoomManager;
-struct AVFormatContext;
-struct AVCodecContext;
-struct AVFilterGraph;
-struct AVFilterContext;
-struct AVBufferRef;
+extern "C" {
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavfilter/avfilter.h>
+#include <libavutil/hwcontext.h>
+}
 
-/**
- * @class RtspStreamer
- * @brief 管理RTSP推流的整个生命周期。
- *
- * 此类将所有用于推流的FFmpeg操作封装在一个独立的线程中，
- * 以避免阻塞主应用程序逻辑。它与OsdManager和ZoomManager协作，
- * 以在推流过程中实现OSD叠加和数字变焦功能。
- */
+#include "osd_manager.h"
+#include "zoom_manager.h"
+#include "threadsafe_queue.h"
+
+class CameraCapture;
+
 class RtspStreamer {
 public:
-    /**
-     * @brief 构造函数。
-     * @param device 摄像头设备路径 (例如 "/dev/video0")。
-     * @param osd_manager 指向OsdManager的共享指针。
-     * @param zoom_manager 指向ZoomManager的共享指针。
-     */
-    RtspStreamer(std::string device,
+    RtspStreamer(CameraCapture* capture_module,
                  std::shared_ptr<OsdManager> osd_manager,
                  std::shared_ptr<ZoomManager> zoom_manager);
 
-    /**
-     * @brief 为给定的RTSP URL准备推流。
-     * @param rtsp_url 目标RTSP URL。
-     * @return 成功返回 true，否则返回 false。
-     */
+    ~RtspStreamer();
+
     bool prepare(const std::string& rtsp_url);
-
-    /**
-     * @brief 请求停止推流 (线程安全)。
-     */
+    
+    void run();
     void stop();
-
-    /**
-     * @brief 检查当前是否正在推流。
-     */
     bool isStreaming() const;
 
-    /**
-     * @brief 核心推流函数，应在一个独立的线程中运行。
-     */
-    void run();
-
 private:
-    // 清理所有FFmpeg相关资源
-    void cleanup();
+    void thread_filter_osd();
+    void thread_encode_stream();
 
-    // 根据新的变焦参数重新配置FFmpeg滤镜图
+    bool initialize_ffmpeg();
+    void cleanup_ffmpeg();
     bool reconfigure_filters();
 
-    // FFmpeg 上下文
-    AVFormatContext *m_ifmt_ctx = nullptr;
+    CameraCapture* m_capture_module;
+    std::shared_ptr<OsdManager> m_osd_manager;
+    std::shared_ptr<ZoomManager> m_zoom_manager;
+
     AVFormatContext *m_ofmt_ctx = nullptr;
-    AVCodecContext *m_dec_ctx = nullptr;
     AVCodecContext *m_enc_ctx = nullptr;
     AVFilterGraph *m_filter_graph = nullptr;
     AVFilterContext *m_buffersrc_ctx = nullptr;
     AVFilterContext *m_buffersink_ctx = nullptr;
-    AVBufferRef *m_hw_device_ctx = nullptr;
     
-    // 状态和控制标志
+    std::string m_rtsp_url;
+    AVStream *m_out_stream = nullptr;
+    
+    // [新增] 用于消费者内部的时间戳归一化
+    int64_t m_first_pts = AV_NOPTS_VALUE;
+
+    bool m_use_hw = false;
     std::atomic<bool> m_stop_flag{false};
     std::atomic<bool> m_is_streaming{false};
+    std::atomic<bool> m_pipeline_error{false};
 
-    // 参数
-    std::string m_device_name;
-    std::string m_rtsp_url;
+    std::thread m_thread_filter;
+    std::thread m_thread_encode;
 
-    // 管理器
-    std::shared_ptr<OsdManager> m_osd_manager;
-    std::shared_ptr<ZoomManager> m_zoom_manager;
+    // [新增] 用于保护滤镜图重建过程的互斥锁
+    std::mutex m_filter_mutex;
+
+    ThreadSafeFrameQueue m_queue_decoded_frames;
+    ThreadSafeFrameQueue m_queue_filtered_frames;
 };
 
-#endif // RTSP_STREAMER_H
-
+#endif // RTSP_STREAMER_H```

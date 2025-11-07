@@ -13,6 +13,15 @@ extern "C"
 {
 #endif
 
+    // 定义与 OsdManager::PosData 对应的 C 结构体
+    typedef struct
+    {
+        double latitude;
+        double longitude;
+        float speed_kmh;
+        const char *timestamp; // 使用 const char* 以便 C 语言调用
+    } camera_sdk_pos_data_t;
+
     /**
      * @brief 初始化摄像头 SDK 控制器。
      *
@@ -64,7 +73,7 @@ extern "C"
      * @param url 要推送到的RTSP服务器地址 (例如 "rtsp://localhost:8554/live.stream")。
      * @return 成功启动返回 0，如果已在推流中或参数错误则返回 -1。
      */
-    int camera_sdk_start_rtsp_stream(void* handle, const char* url);
+    int camera_sdk_start_rtsp_stream(void *handle, const char *url);
 
     /**
      * @brief 停止当前正在进行的RTSP推流。
@@ -74,7 +83,7 @@ extern "C"
      * @param handle camera_sdk_create 返回的有效句柄。
      * @return 成功停止返回 0，如果当前没有在推流则返回 -1。
      */
-    int camera_sdk_stop_rtsp_stream(void* handle);
+    int camera_sdk_stop_rtsp_stream(void *handle);
 
     /**
      * @brief 拍摄一张快照 (JPEG 图片)。
@@ -96,6 +105,14 @@ extern "C"
     void camera_sdk_set_osd_enabled(void *handle, bool enabled);
 
     /**
+     * @brief 设置 OSD 要显示的 POS 数据。
+     *
+     * @param handle camera_sdk_create 返回的有效句柄。
+     * @param data 包含经纬度、速度和时间戳的结构体指针。
+     */
+    void camera_sdk_set_osd_data(void *handle, const camera_sdk_pos_data_t *data);
+
+    /**
      * @brief 放大 (数字变焦)。
      *
      * 这是一个非阻塞函数，会立即返回。变焦效果将异步应用到后续的录制和拍照中。
@@ -113,9 +130,23 @@ extern "C"
      */
     void camera_sdk_zoom_out(void *handle);
 
+    /**
+     * @brief 设置相机传感器的ISO值（感光度）。
+     *
+     * @param handle camera_sdk_create 返回的有效句柄。
+     * @param iso 目标ISO值，例如 100, 200, 400, 800, 1600。
+     */
+    void camera_sdk_set_iso(void *handle, int iso);
+
+    /**
+     * @brief 设置相机传感器的EV值（曝光补偿）。
+     * @param handle camera_sdk_create 返回的有效句柄。
+     * @param ev 目标EV值，例如 -2.0, -1.0, 0.0, 1.0, 2.0。
+     */
+    void camera_sdk_set_ev(void *handle, double ev);
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif // CAMERA_SDK_H
-
